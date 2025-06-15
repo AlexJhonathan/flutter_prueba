@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 
 class FisrtPage extends StatelessWidget {
-  const FisrtPage({super.key});
 
   @override
   Widget build(BuildContext context) {

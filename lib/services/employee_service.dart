@@ -15,54 +15,53 @@ class EmployeeResponse {
 }
 
 class EmployeeService {
-  final String baseUrl = 'https://bacake.api.dev.dtt.tja.ucb.edu.bo';
+  final String baseUrl = 'https://bacake.api.dev.dtt.tja.ucb.edu.bo/api';
 
-  Future<EmployeeResponse> addEmployee(String name, String email, String password, int role) async {
+  Future<EmployeeResponse> addEmployee(String name, String email, String password, int role, int branchId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
       
       if (token == null) throw Exception('Token not found');
 
-      final requestBody = {
-        "name": name,
-        "email": email,
-        "password": password,
-        "role": role
-      };
-
-      print('URL completa: $baseUrl/api/user/');
-      print('Request body: ${json.encode(requestBody)}');
-
       final response = await http.post(
-        Uri.parse('$baseUrl/api/user/'),
+        Uri.parse('$baseUrl/user/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: json.encode(requestBody),
+        body: json.encode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'role': role,
+          'branchId': branchId, // Asegurarse de usar 'branchId'
+        }),
       );
 
+      print('Request URL: $baseUrl/employee/');
+      print('Request headers: ${{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      }}');
+      print('Request body: ${json.encode({
+        'name': name,
+        'email': email,
+        'password': password,
+        'role': role,
+        'branchId': branchId, // Asegurarse de usar 'branchId'
+      })}');
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (response.statusCode == 201) {
         return EmployeeResponse.fromJson(json.decode(response.body));
       } else {
-        try {
-          final errorBody = json.decode(response.body);
-          return EmployeeResponse(
-            error: errorBody['message'] ?? errorBody['error'] ?? 'Error del servidor: ${response.statusCode}'
-          );
-        } catch (e) {
-          return EmployeeResponse(
-            error: 'Error del servidor ${response.statusCode}: ${response.body}'
-          );
-        }
+        final errorBody = json.decode(response.body);
+        return EmployeeResponse(error: errorBody['message'] ?? 'Failed to add employee');
       }
     } catch (e) {
-      print('Exception caught: $e');
-      return EmployeeResponse(error: 'Error de conexión: ${e.toString()}');
+      return EmployeeResponse(error: e.toString());
     }
   }
 }

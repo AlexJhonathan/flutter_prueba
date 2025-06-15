@@ -5,13 +5,12 @@ import '../models/login_model.dart';
 import 'package:flutter/material.dart';
 
 class AuthService {
-  final String baseUrl = 'https://bacake.api.dev.dtt.tja.ucb.edu.bo/api';
+  final String baseUrl = 'https://bacake.api.dev.dtt.tja.ucb.edu.bo/api/auth';
 
   Future<LoginResponse> login(BuildContext context, String email, String password) async {
     try {
-      // Primera llamada - login
-      final loginResponse = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
@@ -19,60 +18,37 @@ class AuthService {
         }),
       );
 
-      print('Login response: ${loginResponse.body}'); // Para debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
-      if (loginResponse.statusCode == 200) {
-        final loginData = json.decode(loginResponse.body);
-        final token = loginData['token'];
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decodedResponse = json.decode(response.body);
+        final loginResponse = LoginResponse.fromJson(decodedResponse);
+        
+        // Guardar token, rol y branchId
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', loginResponse.token);
+        await prefs.setInt('userRole', loginResponse.role);
+        await prefs.setInt('branchId', loginResponse.branchId); // Guardar branchId
 
-        // Segunda llamada - obtener datos del usuario
-        final userResponse = await http.get(
-          Uri.parse('$baseUrl/user'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-        );
-
-        print('User response: ${userResponse.body}'); // Para debugging
-
-        if (userResponse.statusCode == 200) {
-          final userData = json.decode(userResponse.body);
-          
-          // Convertir el rol a int de manera segura
-          int role;
-          if (userData['role'] is String) {
-            role = int.tryParse(userData['role']) ?? 0;
-          } else if (userData['role'] is int) {
-            role = userData['role'];
-          } else {
-            role = 0;
-          }
-
-          final LoginResponse response = LoginResponse(
-            token: token,
-            role: role,
-            error: '',
-          );
-
-          // Guardar token y rol
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', response.token);
-          await prefs.setInt('userRole', response.role);
-
-          return response;
-        } else {
-          return LoginResponse(error: 'Error al obtener datos del usuario');
-        }
+        return loginResponse;
       } else {
-        final errorBody = json.decode(loginResponse.body);
+        final errorBody = json.decode(response.body);
         return LoginResponse(
-          error: errorBody['message'] ?? 'Error al iniciar sesión'
+          token: '', // Proporcionar un valor vacío para el token en caso de error
+          role: 0,
+          branchId: 0,
+          error: errorBody['message'] ?? 'Error al iniciar sesión',
         );
       }
     } catch (e) {
-      print('Login error: $e'); // Para debugging
-      return LoginResponse(error: 'Error de conexión: $e');
+      print('Login error: $e');
+      return LoginResponse(
+        token: '', // Proporcionar un valor vacío para el token en caso de error
+        role: 0,
+        branchId: 0,
+        error: 'Error de conexión: $e',
+      );
     }
   }
 }

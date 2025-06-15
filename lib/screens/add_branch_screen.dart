@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/branch_service.dart';
-import 'list_users_screen.dart';
 
 class AddBranchScreen extends StatefulWidget {
   @override
@@ -18,7 +17,7 @@ class _AddBranchScreenState extends State<AddBranchScreen> {
   Future<void> _addBranch() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       final response = await _branchService.addBranch(
         _nombreController.text,
         _direccionController.text,
@@ -31,6 +30,7 @@ class _AddBranchScreenState extends State<AddBranchScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Sucursal añadida exitosamente')),
         );
+        Navigator.pop(context, true); // Volver a la pantalla anterior con éxito
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response.error)),
@@ -57,16 +57,16 @@ class _AddBranchScreenState extends State<AddBranchScreen> {
               ),
               SizedBox(height: 16),
               TextFormField(
-                controller: _telefonoController,
-                decoration: InputDecoration(labelText: 'Teléfono'),
-                keyboardType: TextInputType.phone,
-                validator: (value) => value?.isEmpty ?? true ? 'Ingrese el teléfono' : null,
-              ),
-              SizedBox(height: 16),
-              TextFormField(
                 controller: _direccionController,
                 decoration: InputDecoration(labelText: 'Dirección'),
                 validator: (value) => value?.isEmpty ?? true ? 'Ingrese la dirección' : null,
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _telefonoController,
+                decoration: InputDecoration(labelText: 'Teléfono'),
+                keyboardType: TextInputType.number,
+                validator: (value) => value?.isEmpty ?? true ? 'Ingrese el teléfono' : null,
               ),
               SizedBox(height: 24),
               _isLoading
@@ -75,16 +75,6 @@ class _AddBranchScreenState extends State<AddBranchScreen> {
                       onPressed: _addBranch,
                       child: Text('Añadir Sucursal'),
                     ),
-                    SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ListUsersScreen()),
-                            );
-                          },
-                          child: Text('Listar Usuarios'),
-                        ),
             ],
           ),
         ),

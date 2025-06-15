@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/menu_service.dart';
-import 'add_branch_screen.dart'; // Import AddBranchScreen
+import '../services/menu_create_service.dart';
+import '../models/menu_create_model.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -11,30 +11,33 @@ class _HomeScreenState extends State<HomeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _branchIDController = TextEditingController();
-  final _statusController = TextEditingController();
-  final _menuService = MenuService();
+  bool _status = false;
+  final _menuService = MenuCreateService();
   bool _isLoading = false;
 
   Future<void> _createMenu() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
-      final response = await _menuService.createMenu(
-        _nameController.text,
-        int.parse(_branchIDController.text),
-        int.parse(_statusController.text),
-      );
 
-      setState(() => _isLoading = false);
-
-      if (response.error.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Menu created successfully')),
+      try {
+        final menu = MenuCreate(
+          name: _nameController.text,
+          branchId: int.parse(_branchIDController.text),
+          status: _status,
         );
-      } else {
+        await _menuService.createMenu(menu);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response.error)),
+          SnackBar(content: Text('Menú creado exitosamente')),
         );
+        _nameController.clear();
+        _branchIDController.clear();
+        setState(() => _status = false);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al crear el menú: $e')),
+        );
+      } finally {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -42,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Create Menu')),
+      appBar: AppBar(title: Text('Crear Menú')),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Form(
@@ -52,43 +55,32 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(labelText: 'Name'),
-                validator: (value) => value?.isEmpty ?? true ? 'Enter name' : null,
+                decoration: InputDecoration(labelText: 'Nombre'),
+                validator: (value) => value?.isEmpty ?? true ? 'Ingrese el nombre' : null,
               ),
               SizedBox(height: 16),
               TextFormField(
                 controller: _branchIDController,
                 decoration: InputDecoration(labelText: 'Branch ID'),
                 keyboardType: TextInputType.number,
-                validator: (value) => value?.isEmpty ?? true ? 'Enter branch ID' : null,
+                validator: (value) => value?.isEmpty ?? true ? 'Ingrese el Branch ID' : null,
               ),
               SizedBox(height: 16),
-              TextFormField(
-                controller: _statusController,
-                decoration: InputDecoration(labelText: 'Status'),
-                keyboardType: TextInputType.number,
-                validator: (value) => value?.isEmpty ?? true ? 'Enter status' : null,
+              SwitchListTile(
+                title: Text('Status'),
+                value: _status,
+                onChanged: (value) {
+                  setState(() {
+                    _status = value;
+                  });
+                },
               ),
               SizedBox(height: 24),
               _isLoading
                   ? CircularProgressIndicator()
-                  : Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _createMenu,
-                          child: Text('Create'),
-                        ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => AddBranchScreen()),
-                            );
-                          },
-                          child: Text('Add Branch'),
-                        ),
-                      ],
+                  : ElevatedButton(
+                      onPressed: _createMenu,
+                      child: Text('Crear Menú'),
                     ),
             ],
           ),

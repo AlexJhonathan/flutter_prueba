@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       final response = await _authService.login(
         context,
         _emailController.text,
@@ -39,13 +39,17 @@ class _LoginScreenState extends State<LoginScreen> {
           case 2:
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ReposteraScreen()),
+              MaterialPageRoute(
+                builder: (context) => ReposteraScreen(branchId: response.branchId),
+              ),
             );
             break;
           case 3:
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => MeseraScreen()),
+              MaterialPageRoute(
+                builder: (context) => MeseraScreen(branchId: response.branchId),
+              ),
             );
             break;
           default:
@@ -91,36 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _login,
                       child: Text('Ingresar'),
                     ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AdminScreen()),
-                  );
-                },
-                child: Text('Entrar como Administrador'),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ReposteraScreen()),
-                  );
-                },
-                child: Text('Entrar como Repostera'),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => MeseraScreen()),
-                  );
-                },
-                child: Text('Entrar como Mesera'),
-              ),
             ],
           ),
         ),
